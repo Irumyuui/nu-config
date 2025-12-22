@@ -1,0 +1,5 @@
+source commands_with_description_menu.nu
+source completeion_menu.nu
+source current_session_history_menu.nu
+source history_menu.nu
+source zoxide_menu.nu
