@@ -1,25 +1,31 @@
-def __zoxide_menu [] {
-    {
-      name: zoxide_menu
-      only_buffer_difference: true
-      marker: "z -> "
-      type: {
-          layout: list
-          page_size: 20
-      }
-      style: {
-          text: green                   
-          selected_text: green_reverse       
-          description_text: yellow
-      }
-      source: { |buffer, position|
-          zoxide query -ls $buffer
-          | parse -r '(?P<description>[0-9]+) (?P<value>.+)'
-      }
-    }
-}
+export-env {
+  $env.config = (
+    $env.config?
+    | default {}
+    | upsert menus { default [] }
+    | upsert keybindings { default [] }
+  )
 
-def __zoxide_keybinding [] {
+  $env.config.menus ++= [{
+    name: zoxide_menu
+    only_buffer_difference: true
+    marker: "z > "
+    type: {
+      layout: list
+      page_size: 20
+    }
+    style: {
+      text: green                   
+      selected_text: green_reverse       
+      description_text: yellow
+    }
+    source: {
+      |buffer, position|
+        zoxide query -ls $buffer | parse -r '(?P<description>[0-9]+) (?P<value>.+)'
+    }
+  }]
+
+  $env.config.keybindings ++= [
     {
       name: zoxide_menu
       modifier: control
@@ -28,10 +34,7 @@ def __zoxide_keybinding [] {
       event: [
         { send: menu name: zoxide_menu }
       ]
-    }
-}
-
-def __edit_keybinding [] {
+    },
     {
       name: edit
       modifier: alt
@@ -41,11 +44,5 @@ def __edit_keybinding [] {
         { send: OpenEditor }
       ]
     }
-}
-
-export-env {
-    $env.config = ($env.config
-                  | upsert menus ($env.config.menus | append (__zoxide_menu))
-                  | upsert keybindings ($env.config.keybindings | append [(__zoxide_keybinding) (__edit_keybinding)])
-                )
+  ]
 }
