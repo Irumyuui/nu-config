@@ -6,5 +6,6 @@ source dotnet.nu
 source eza.nu
 source git.nu
 source rg.nu
+source helix.nu
 source rustup.nu
 source winget.nu
