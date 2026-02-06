@@ -9,3 +9,5 @@ source rg.nu
 source helix.nu
 source rustup.nu
 source winget.nu
+source tree-sitter.nu
+source pixi.nu
