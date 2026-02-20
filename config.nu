@@ -1,5 +1,7 @@
 # $env.config.buffer_editor = "code"
 
+source ./scripts/network-proxy.nu
+
 $env.config.buffer_editor = "hx"
 $env.config.history.max_size = 1000000
 $env.config.display_errors.exit_code = true
