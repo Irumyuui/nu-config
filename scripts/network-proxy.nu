@@ -3,6 +3,18 @@
 # Proxy management functions
 # These functions allow manual control of proxy settings
 
+# Helper function for colorized status messages
+def print-status [level: string, message: string] {
+    let reset = (ansi reset)
+    match $level {
+        "ok" => { print $"(ansi green)[OK]($reset) ($message)" }
+        "info" => { print $"(ansi cyan)[INFO]($reset) ($message)" }
+        "warn" => { print $"(ansi yellow)[WARN]($reset) ($message)" }
+        "err" => { print $"(ansi red)[ERROR]($reset) ($message)" }
+        _ => { print $message }
+    }
+}
+
 # Helper function to check if a port is listening (cross-platform)
 def check-port-listening [port: int] {
     if ($nu.os-info.name == "windows") {
@@ -29,7 +41,7 @@ export def proxy-status [] {
     let http_proxy = ($env.HTTP_PROXY? | default "")
 
     if ($http_proxy != "") {
-        print $"🌐 Current proxy: ($http_proxy)"
+        print-status info $"Current proxy: ($http_proxy)"
 
         # Test if the proxy is actually working
         let test_result = try {
@@ -39,12 +51,12 @@ export def proxy-status [] {
         }
 
         if ($test_result.exit_code == 0) {
-            print "✅ Proxy is working"
+            print-status ok "Proxy is working"
         } else {
-            print "❌ Proxy appears to be down"
+            print-status err "Proxy appears to be down"
         }
     } else {
-        print "🔗 Direct connection (no proxy configured)"
+        print-status info "Direct connection (no proxy configured)"
     }
 }
 
@@ -58,14 +70,14 @@ export def proxy-on [] {
     }
     mut proxy_found = false
 
-    print "🔍 Scanning for available proxy servers..."
+    print-status info "Scanning for available proxy servers..."
 
     for port in $common_proxy_ports {
         if not $proxy_found {
             # Check if port is listening using helper function
             if (check-port-listening $port) {
                 let proxy_url = $"http://127.0.0.1:($port)"
-                print $"🔍 Found service on port ($port), testing connectivity..."
+                print-status info $"Found service on port ($port), testing connectivity..."
 
                 # Test proxy connectivity
                 let proxy_test = try {
@@ -83,18 +95,18 @@ export def proxy-on [] {
                     $env.ALL_PROXY = $proxy_url
                     $env.all_proxy = $proxy_url
 
-                    print $"✅ Proxy enabled: ($proxy_url)"
+                    print-status ok $"Proxy enabled: ($proxy_url)"
                     $proxy_found = true
                 } else {
-                    print $"❌ Proxy on port ($port) is not working"
+                    print-status err $"Proxy on port ($port) is not working"
                 }
             }
         }
     }
 
     if not $proxy_found {
-        print "❌ No working proxy found on common ports"
-        print "💡 Make sure your proxy software (like Clash, V2Ray, etc.) is running"
+        print-status err "No working proxy found on common ports"
+        print-status warn "Make sure your proxy software (like Clash, V2Ray, etc.) is running"
     }
 }
 
@@ -107,7 +119,7 @@ export def proxy-off [] {
     $env.ALL_PROXY = ""
     $env.all_proxy = ""
 
-    print "🚫 Proxy disabled - using direct connection"
+    print-status info "Proxy disabled - using direct connection"
 }
 
 # Toggle proxy on/off
@@ -123,14 +135,14 @@ export def proxy-toggle [] {
 
 # Force re-detection of proxy (useful when proxy software starts after Nushell)
 export def proxy-detect [] {
-    print "🔄 Re-detecting proxy configuration..."
+    print-status info "Re-detecting proxy configuration..."
     proxy-off
     proxy-on
 }
 
 # Set custom proxy manually
 export def proxy-set [proxy_url: string] {
-    print $"🔧 Setting custom proxy: ($proxy_url)"
+    print-status info $"Setting custom proxy: ($proxy_url)"
 
     # Test the custom proxy
     let test_result = try {
@@ -147,10 +159,10 @@ export def proxy-set [proxy_url: string] {
         $env.ALL_PROXY = $proxy_url
         $env.all_proxy = $proxy_url
 
-        print "✅ Custom proxy set and tested successfully"
+        print-status ok "Custom proxy set and tested successfully"
     } else {
-        print "❌ Custom proxy is not working or unreachable"
-        print "💡 Please check the proxy URL and ensure the service is running"
+        print-status err "Custom proxy is not working or unreachable"
+        print-status warn "Please check the proxy URL and ensure the service is running"
     }
 }
 
@@ -165,7 +177,7 @@ def detect-proxy-software [] {
 
             for port in $common_proxy_ports {
                 if (check-port-listening $port) {
-                    print $"🪟 Windows proxy service detected on port ($port)"
+                    print-status info $"Windows proxy service detected on port ($port)"
                     $proxy_detected = true
                     $detected_port = $port
                     break
@@ -184,10 +196,10 @@ def detect-proxy-software [] {
                 }
 
                 if ($proxy_test.exit_code == 0) {
-                    print $"✅ Proxy auto-enabled: ($proxy_url)"
+                    print-status ok $"Proxy auto-enabled: ($proxy_url)"
                     return $proxy_url
                 } else {
-                    print $"⚠️ Proxy on port ($detected_port) detected but not working, use 'proxy-on' to test manually"
+                    print-status warn $"Proxy on port ($detected_port) detected but not working, use 'proxy-on' to test manually"
                 }
             }
         } else {
@@ -198,7 +210,7 @@ def detect-proxy-software [] {
 
             for port in $common_proxy_ports {
                 if (check-port-listening $port) {
-                    print $"🐧 macOS/Linux proxy service detected on port ($port)"
+                    print-status info $"macOS/Linux proxy service detected on port ($port)"
                     $proxy_detected = true
                     $detected_port = $port
                     break
@@ -217,10 +229,10 @@ def detect-proxy-software [] {
                 }
 
                 if ($proxy_test.exit_code == 0) {
-                    print $"✅ Proxy auto-enabled: ($proxy_url)"
+                    print-status ok $"Proxy auto-enabled: ($proxy_url)"
                     return $proxy_url
                 } else {
-                    print $"⚠️ Proxy on port ($detected_port) detected but not working, use 'proxy-on' to test manually"
+                    print-status warn $"Proxy on port ($detected_port) detected but not working, use 'proxy-on' to test manually"
                 }
             }
         }
@@ -249,9 +261,9 @@ try {
 try {
     let current_proxy = ($env.HTTP_PROXY? | default "")
     if ($current_proxy != "") {
-        print "💡 Proxy active. Available commands: 'proxy-status', 'proxy-off', 'proxy-toggle', 'proxy-detect', 'proxy-set <url>'"
+        print-status info "Proxy active. Available commands: 'proxy-status', 'proxy-off', 'proxy-toggle', 'proxy-detect', 'proxy-set <url>'"
     } else {
-        print "💡 Available proxy commands: 'proxy-status', 'proxy-on', 'proxy-off', 'proxy-toggle', 'proxy-detect', 'proxy-set <url>'"
+        print-status info "Available proxy commands: 'proxy-status', 'proxy-on', 'proxy-off', 'proxy-toggle', 'proxy-detect', 'proxy-set <url>'"
     }
 } catch {
     # Silently handle proxy status errors
