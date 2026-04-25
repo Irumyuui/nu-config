@@ -261,9 +261,9 @@ try {
 try {
     let current_proxy = ($env.HTTP_PROXY? | default "")
     if ($current_proxy != "") {
-        print-status info "Proxy active. Available commands: 'proxy-status', 'proxy-off', 'proxy-toggle', 'proxy-detect', 'proxy-set <url>'"
+        print-status info "Proxy active. Try: proxy-status | proxy-toggle | proxy-set <url>"
     } else {
-        print-status info "Available proxy commands: 'proxy-status', 'proxy-on', 'proxy-off', 'proxy-toggle', 'proxy-detect', 'proxy-set <url>'"
+        print-status info "Proxy ready. Try: proxy-on | proxy-status"
     }
 } catch {
     # Silently handle proxy status errors
