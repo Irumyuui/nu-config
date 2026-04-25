@@ -2,13 +2,15 @@
 
 source ./scripts/network-proxy.nu
 
+$env.config.render_right_prompt_on_last_line = true
+$env.config.show_banner = false
 $env.config.buffer_editor = "hx"
 $env.config.history.max_size = 1000000
 $env.config.display_errors.exit_code = true
 $env.config.rm.always_trash = true
 $env.config.table.mode = 'reinforced'
 
-$env.RUSTC_WRAPPER = "sccache"
+# $env.RUSTC_WRAPPER = "sccache"
 $env.RUST_BACKTRACE = 1
 $env.RUSTUP_DIST_SERVER = "https://rsproxy.cn"
 $env.RUSTUP_UPDATE_ROOT = "https://rsproxy.cn/rustup"
